@@ -1,0 +1,49 @@
+volumes:
+  report_db_volume:
+    name: report_db_volume
+
+networks:
+  report_network:
+    name: report_network
+
+services:
+  db_report:
+    container_name: db_report
+    build:
+      dockerfile: ./Dockerfile
+    volumes:
+      - ./src:/db-report/src
+    ports:
+      - "8000:8000"
+    restart: always
+    depends_on:
+      report_db:
+        condition: service_healthy
+    networks:
+      - report_network
+
+  report_db:
+    build:
+      dockerfile: ./PG-Dockerfile
+    command: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all
+    container_name: report_db
+    restart: always
+    volumes:
+      - report_db_volume:/var/lib/postgresql/data
+    environment:
+      PGDATA: /var/lib/postgresql/data
+      POSTGRES_DB: "application_database"
+      POSTGRES_PASSWORD: "root"
+      POSTGRES_USER: "report_admin"
+      PGPORT: 5433
+      POSTGRES_EXTENSIONS: pg_stat_statements
+    ports:
+      - "5433:5433"
+    healthcheck:
+      test:
+        ["CMD", "pg_isready", "-q", "-d", "application_database", "-U", "report_admin"]
+      timeout: 45s
+      interval: 1s
+      retries: 45
+    networks:
+      - report_network
