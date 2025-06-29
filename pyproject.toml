@@ -1,0 +1,25 @@
+[project]
+name = "db-report"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "wojwarych",email = "woj.warych@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+]
+
+[tool.poetry]
+packages = [{include = "db_report", from = "src"}]
+
+
+[tool.poetry.group.prod.dependencies]
+falcon = {extras = ["uvicorn"], version = "^4.0.2"}
+uvicorn = "^0.35.0"
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.41"}
+asyncpg = "^0.30.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
