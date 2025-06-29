@@ -8,6 +8,8 @@ networks:
 
 services:
   db_report:
+    stdin_open: true
+    tty: true
     container_name: db_report
     build:
       dockerfile: ./Dockerfile
@@ -25,7 +27,7 @@ services:
   report_db:
     build:
       dockerfile: ./PG-Dockerfile
-    command: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all
+    command: postgres -c shared_preload_libraries=pg_stat_statements,pgstattuple -c pg_stat_statements.track=all
     container_name: report_db
     restart: always
     volumes:
@@ -36,7 +38,6 @@ services:
       POSTGRES_PASSWORD: "root"
       POSTGRES_USER: "report_admin"
       PGPORT: 5433
-      POSTGRES_EXTENSIONS: pg_stat_statements
     ports:
       - "5433:5433"
     healthcheck:
