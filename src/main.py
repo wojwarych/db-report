@@ -17,7 +17,18 @@ class DbReportResource:
         except Exception as e:
             print(e)
         print(foo)
-        resp.text = "Hello!"
+        resp.text = "Bar!"
+
+    async def on_get_table_pages(self, req, resp, table_name: str):
+        resp.status = falcon.HTTP_200
+        resp.content_type = falcon.MEDIA_TEXT
+        try:
+            foo = await self._storage.get_table_pages(table_name)
+        except Exception as e:
+            print(e)
+        print(foo)
+        resp.text = table_name
+
 
 
 app = falcon.asgi.App()
@@ -25,3 +36,4 @@ storage = DbConnection(engine)
 db_rep_res = DbReportResource(storage)
 
 app.add_route("/hello", db_rep_res)
+app.add_route("/page/{table_name}", db_rep_res, suffix="table_pages")
