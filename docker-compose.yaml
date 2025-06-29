@@ -12,7 +12,7 @@ services:
     build:
       dockerfile: ./Dockerfile
     volumes:
-      - ./src:/db-report/src
+      - ./src:/app/src
     ports:
       - "8000:8000"
     restart: always

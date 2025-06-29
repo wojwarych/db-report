@@ -19,6 +19,7 @@ WORKDIR /app
 COPY poetry.lock pyproject.toml README.md /app
 RUN poetry install --no-interaction --no-ansi --no-root
 
-COPY ./src /app/
+COPY ./src /app/src/
+WORKDIR /app/src
 EXPOSE 8000
-ENTRYPOINT ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
