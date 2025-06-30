@@ -3,7 +3,9 @@ from typing import Protocol
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 
-engine = create_async_engine("postgresql+asyncpg://report_admin:root@report_db:5433/application_database")
+engine = create_async_engine(
+    "postgresql+asyncpg://report_admin:root@report_db:5433/application_database"
+)
 DEFAULT_SESSION_FACTORY = async_sessionmaker(engine)
 
 
@@ -11,11 +13,9 @@ class IUnitOfWork(Protocol):
     async def __aexit__(self, *args):
         await self.rollback()
 
-    async def commit(self):
-        ...
+    async def commit(self): ...
 
-    async def rollback(self):
-        ...
+    async def rollback(self): ...
 
 
 class SQLAlchemyUnitOfWork(IUnitOfWork):

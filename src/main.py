@@ -7,6 +7,7 @@ import falcon
 import falcon.asgi
 from dependency_injector.wiring import Provide, inject
 from falcon import media
+import uvicorn
 
 from db_report.storage.db import DbConnection
 from db_report.storage.engine import IUnitOfWork, SQLAlchemyUnitOfWork
@@ -25,15 +26,17 @@ class DataClassSerializer(json.JSONEncoder):
 dataclasses_json_serializer = media.JSONHandler(
     dumps=partial(json.dumps, cls=DataClassSerializer),
 )
-extra_handlers = {
-    "application/json": dataclasses_json_serializer
-}
+extra_handlers = {"application/json": dataclasses_json_serializer}
 
 
 class DbReportResource:
     @inject
     async def on_get_table_pages(
-        self, req, resp, table_name: str, service: DbConnection = Provide["db_connection"]
+        self,
+        req,
+        resp,
+        table_name: str,
+        service: DbConnection = Provide["db_connection"],
     ):
         resp.status = falcon.HTTP_200
         resp.content_type = falcon.MEDIA_JSON
@@ -57,7 +60,6 @@ class DbReportResource:
         resp.media = foo
 
 
-
 container = Container()
 container.wire(modules=[__name__])
 app = falcon.asgi.App()
@@ -67,3 +69,7 @@ db_rep_res = DbReportResource()
 
 app.add_route("/page/{table_name}", db_rep_res, suffix="table_pages")
 app.add_route("/queries/top", db_rep_res, suffix="top_queries")
+
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", port=8000, host="0.0.0.0", reload=True)
