@@ -13,7 +13,7 @@ RUN sh /uv-installer.sh && rm /uv-installer.sh
 ENV PATH="/root/.local/bin/:$PATH"
 
 WORKDIR /app
-COPY uv.lock pyproject.toml .python-version README.md /app
+COPY uv.lock pyproject.toml .python-version README.md config.ini /app
 RUN uv sync --locked
 
 COPY ./src /app/src/
