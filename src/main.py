@@ -36,37 +36,41 @@ class DbReportResource:
         req,
         resp,
         table_name: str,
-        service: DbConnection = Provide["db_connection"],
+        db_connection: DbConnection = Provide[Container.db_connection],
     ):
-        resp.status = falcon.HTTP_200
-        resp.content_type = falcon.MEDIA_JSON
         try:
-            foo = await service.get_table_pages(table_name)
+            data = await db_connection.get_table_pages(table_name)
         except Exception as e:
-            print(e)
-        resp.media = foo
+            resp.status = falcon.HTTP_404
+            resp.content_type = falcon.MEDIA_TEXT
+            resp.text = f"Could not access table {table_name}!"
+        else:
+            resp.status = falcon.HTTP_200
+            resp.content_type = falcon.MEDIA_JSON
+            resp.media = data
 
     @inject
     async def on_get_top_queries(
-        self, req, resp, service: DbConnection = Provide["db_connection"]
+        self, req, resp, db_connection: DbConnection = Provide[Container.db_connection]
     ):
-        print(service)
-        resp.status = falcon.HTTP_200
-        resp.content_type = falcon.MEDIA_JSON
         try:
-            foo = await service.get_top_queries()
+            data = await db_connection.get_top_queries()
         except Exception as e:
-            print(e)
-        resp.media = foo
+            resp.status = falcon.HTTP_404
+            resp.content_type = falcon.MEDIA_TEXT
+            resp.text = "Could not access data!"
+        else:
+            resp.status = falcon.HTTP_200
+            resp.content_type = falcon.MEDIA_JSON
+            resp.media = data
 
 
 container = Container()
 container.wire(modules=[__name__])
-app = falcon.asgi.App()
 
+app = falcon.asgi.App()
 app.resp_options.media_handlers.update(extra_handlers)
 db_rep_res = DbReportResource()
-
 app.add_route("/page/{table_name}", db_rep_res, suffix="table_pages")
 app.add_route("/queries/top", db_rep_res, suffix="top_queries")
 

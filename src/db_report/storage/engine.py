@@ -1,15 +1,20 @@
 from typing import Protocol
 
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
 
-engine = create_async_engine(
-    "postgresql+asyncpg://report_admin:root@report_db:5433/application_database"
-)
-DEFAULT_SESSION_FACTORY = async_sessionmaker(engine)
+def yield_engine(
+    user: str, password: str, host: str, port: int, db_name: str
+) -> AsyncEngine:
+    return create_async_engine(
+        f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{db_name}",
+    )
 
 
 class IUnitOfWork(Protocol):
+    async def __aenter__(self):
+        return self
+
     async def __aexit__(self, *args):
         await self.rollback()
 
@@ -19,14 +24,15 @@ class IUnitOfWork(Protocol):
 
 
 class SQLAlchemyUnitOfWork(IUnitOfWork):
-    def __init__(self, session_factory=DEFAULT_SESSION_FACTORY):
+    def __init__(self, session_factory: AsyncSession):
         self.session_factory = session_factory
 
     async def __aenter__(self):
         self.session = self.session_factory()
-        return self.session
+        return await super().__aenter__()
 
     async def __aexit__(self, *args):
+        await super().__aexit__(*args)
         await self.session.close()
 
     async def commit(self):
