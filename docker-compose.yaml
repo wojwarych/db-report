@@ -17,6 +17,12 @@ services:
       - ./src:/app/src
     ports:
       - "8000:8000"
+    environment:
+      POSTGRES_DB: "application_database"
+      POSTGRES_PASSWORD: "root"
+      POSTGRES_USER: "report_admin"
+      PG_PORT: 5433
+      DB_HOST: "report_db"
     restart: always
     depends_on:
       report_db:
