@@ -1,37 +1,50 @@
+"""Module that implements repository functionalities to fetch stats about DB performance"""
+
 import functools
 import logging
+import typing as t
 
-from sqlalchemy import exc
-from sqlalchemy import text
+from sqlalchemy import exc, text
+
+from db_report.core.mappers import QueryData, TablePagesStats, TopQueries
 
 from .engine import IUnitOfWork
-from db_report.core.mappers import TablePagesStats, TopQueries, QueryData
+
+Param = t.ParamSpec("Param")
+RetType = t.TypeVar("RetType")
 
 
-class NotFoundError(Exception): ...
+class NotFoundError(Exception): ...  # pylint: disable=missing-class-docstring
 
 
-def handle_db_exceptions(f):
+def handle_db_exceptions(
+    f: t.Callable[Param, t.Awaitable[RetType]],
+) -> t.Callable[Param, t.Awaitable[RetType]]:
+    """Decorator that wraps DB exceptions and propagates them in more suitable manner"""
+
     @functools.wraps(f)
-    async def wrapped(*args, **kwargs):
+    async def wrapped(*args: Param.args, **kwargs: Param.kwargs) -> RetType:
+        logger = logging.getLogger(f"{__name__}")
         try:
-            logger = logging.getLogger(f"{__name__}")
             return await f(*args, **kwargs)
         except exc.ProgrammingError as e:
             logger.info("%s", e.orig)
-            raise NotFoundError("Resource not found!")
+            raise NotFoundError("Resource not found!") from e
 
     return wrapped
 
 
 class DbConnection:
+    """Repository-like class that provides communication to statistic resources for Postgres DB"""
+
     def __init__(self, uow: IUnitOfWork):
         self.uow = uow
 
     @handle_db_exceptions
-    async def get_table_pages(self, table_name: str) -> int:
+    async def get_table_pages(self, table_name: str) -> TablePagesStats:
+        """Get statistics about page density for given table"""
         async with self.uow:
-            page_size = await self.uow.session.execute(
+            page_size = await self.uow.session.execute(  # type: ignore[attr-defined]
                 text("SELECT * FROM pgstattuple(:table_name);").bindparams(
                     table_name=table_name
                 )
@@ -51,11 +64,12 @@ class DbConnection:
             )
 
     @handle_db_exceptions
-    async def get_top_queries(self):
+    async def get_top_queries(self) -> TopQueries:
+        """Returns statistics about most often called queries"""
         async with self.uow:
-            page_size = await self.uow.session.execute(
+            page_size = await self.uow.session.execute(  # type: ignore[attr-defined]
                 text(
-                    """SELECT query, calls, total_exec_time, rows, 100.0 * shared_blks_hit / nullif(shared_blks_hit + shared_blks_read, 0) AS hit_percent FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 10;"""
+                    """SELECT query, calls, total_exec_time, rows, 100.0 * shared_blks_hit / nullif(shared_blks_hit + shared_blks_read, 0) AS hit_percent FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 10;"""  # pylint: disable=line-too-long
                 )
             )
             ret1 = page_size.fetchall()

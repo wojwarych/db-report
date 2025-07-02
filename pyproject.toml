@@ -9,6 +9,7 @@ dependencies = []
 
 [dependency-groups]
 dev = [
+    "mypy>=1.16.1",
     "pylint>=3.3.7",
     "ruff>=0.12.1",
 ]
@@ -22,6 +23,9 @@ prod = [
 
 [tool.uv]
 default-groups = ["prod"]
+
+[tool.pylint]
+disable = ["c-extension-no-member"]
 
 [tool.hatch.build.targets.sdist]
 include = ["src/db_report"]
