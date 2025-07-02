@@ -1,4 +1,5 @@
 import functools
+import logging
 
 from sqlalchemy import exc
 from sqlalchemy import text
@@ -14,8 +15,10 @@ def handle_db_exceptions(f):
     @functools.wraps(f)
     async def wrapped(*args, **kwargs):
         try:
+            logger = logging.getLogger(f"{__name__}")
             return await f(*args, **kwargs)
         except exc.ProgrammingError as e:
+            logger.info("%s", e.orig)
             raise NotFoundError("Resource not found!")
 
     return wrapped

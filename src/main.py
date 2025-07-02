@@ -1,5 +1,6 @@
 import json
 import decimal
+import logging
 from dataclasses import asdict, is_dataclass
 from functools import partial
 
@@ -10,7 +11,6 @@ from falcon import media
 import uvicorn
 
 from db_report.storage.db import DbConnection
-from db_report.storage.engine import IUnitOfWork, SQLAlchemyUnitOfWork
 from db_report.containers.containers import Container
 
 
@@ -30,6 +30,9 @@ extra_handlers = {"application/json": dataclasses_json_serializer}
 
 
 class DbReportResource:
+    def __init__(self) -> None:
+        self._logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+
     @inject
     async def on_get_table_pages(
         self,
@@ -38,9 +41,11 @@ class DbReportResource:
         table_name: str,
         db_connection: DbConnection = Provide[Container.db_connection],
     ):
+        self._logger.info("Called for pages for table %s", table_name)
         try:
             data = await db_connection.get_table_pages(table_name)
         except Exception as e:
+            self._logger.error("%s", e)
             resp.status = falcon.HTTP_404
             resp.content_type = falcon.MEDIA_TEXT
             resp.text = f"Could not access table {table_name}!"
@@ -56,6 +61,7 @@ class DbReportResource:
         try:
             data = await db_connection.get_top_queries()
         except Exception as e:
+            self._logger.error("%s", e)
             resp.status = falcon.HTTP_404
             resp.content_type = falcon.MEDIA_TEXT
             resp.text = "Could not access data!"
@@ -66,6 +72,7 @@ class DbReportResource:
 
 
 container = Container()
+container.logging.init()
 container.wire(modules=[__name__])
 
 app = falcon.asgi.App()

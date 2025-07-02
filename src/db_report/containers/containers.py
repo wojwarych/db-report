@@ -1,3 +1,5 @@
+import logging.config
+
 from dependency_injector import containers, providers
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -7,6 +9,8 @@ from db_report.storage.db import DbConnection
 
 class Container(containers.DeclarativeContainer):
     config = providers.Configuration(ini_files=["../config.ini"])
+
+    logging = providers.Resource(logging.config.fileConfig, fname="../logging.ini")
 
     engine = providers.Callable(
         yield_engine,
