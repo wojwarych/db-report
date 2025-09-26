@@ -34,3 +34,17 @@ class TopQueries:
     """Class returning list of query stats"""
 
     queries: list[QueryData]
+
+
+@dataclass(frozen=True)
+class Table:
+    relation: str
+    total_size: str
+    table_size: str
+
+
+@dataclass(frozen=True)
+class TopTables:
+    """Class returning list of top biggest tables"""
+
+    tables: list[Table]

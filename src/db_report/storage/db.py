@@ -6,7 +6,13 @@ import typing as t
 
 from sqlalchemy import exc, text
 
-from db_report.core.mappers import QueryData, TablePagesStats, TopQueries
+from db_report.core.mappers import (
+    QueryData,
+    TablePagesStats,
+    TopQueries,
+    TopTables,
+    Table,
+)
 
 from .engine import IUnitOfWork
 
@@ -81,4 +87,23 @@ class DbConnection:
                     )
                     for q in ret1
                 ]
+            )
+
+    @handle_db_exceptions
+    async def get_top_table_sizes(self) -> TopTables:
+        """Returns statistics about biggest tables in size"""
+        async with self.uow:
+            table_sizes = await self.uow.session.execute(  # type: ignore[attr-defined]
+                text(
+                    """SELECT
+relname AS relation, pg_size_pretty(pg_total_relation_size(C.oid)) AS total_size, pg_size_pretty(pg_relation_size(C.oid)) AS table_size
+FROM pg_class C LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace)
+WHERE nspname NOT IN ('pg_catalog', 'information_schema') AND C.relkind <> 'i' AND nspname !~ '^pg_toast'
+ORDER BY pg_total_relation_size (C.oid) DESC LIMIT 10;"""
+                )
+            )
+            ret1 = table_sizes.fetchall()
+
+            return TopTables(
+                tables=[Table(q.relation, q.total_size, q.table_size) for q in ret1]
             )
