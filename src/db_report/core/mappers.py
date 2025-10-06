@@ -38,6 +38,8 @@ class TopQueries:
 
 @dataclass(frozen=True)
 class Table:
+    """Class returning size data about particular table"""
+
     relation: str
     total_size: str
     table_size: str
@@ -48,3 +50,19 @@ class TopTables:
     """Class returning list of top biggest tables"""
 
     tables: list[Table]
+
+
+@dataclass(frozen=True)
+class DeadTuples:
+    """Class returning dead tuples statistics per table"""
+
+    tablename: str
+    dead_tuples: int
+    alive_tuples: int
+
+
+@dataclass(frozen=True)
+class DeadTuplesTables:
+    """Class returning list of tables with most dead tuples and no. of alive tuples"""
+
+    tables: list[DeadTuples]
