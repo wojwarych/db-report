@@ -12,7 +12,8 @@ from dependency_injector.wiring import Provide, inject
 from falcon import media
 
 from db_report.containers.containers import Container
-from db_report.storage.db import DbConnection, NotFoundError
+from db_report.core.core_api import DBStats
+from db_report.storage.db import NotFoundError
 
 
 class DataClassSerializer(json.JSONEncoder):
@@ -35,23 +36,23 @@ extra_handlers = {"application/json": dataclasses_json_serializer}
 class DbReportResource:
     """Main entrypoint for fetching DB stats resources"""
 
-    def __init__(self) -> None:
-        self._logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
-
     @inject
+    def __init__(self, core_api: DBStats = Provide[Container.core_api]) -> None:
+        self._logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+        self._core_api = core_api
+
     async def on_get_table_pages(
         self,
         req: falcon.asgi.request.Request,  # pylint: disable=unused-argument
         resp: falcon.asgi.response.Response,
         table_name: str,
-        db_connection: DbConnection = Provide[Container.db_connection],
     ) -> None:
         """
         Method for fetching data on table pages density from DB repo
         """
         self._logger.info("Called for pages for table %s", table_name)
         try:
-            data = await db_connection.get_table_pages(table_name)
+            data = await self._core_api.get_table_pages(table_name)
         except NotFoundError as e:
             self._logger.error("%s", e)
             resp.status = falcon.HTTP_404
@@ -62,18 +63,16 @@ class DbReportResource:
             resp.content_type = falcon.MEDIA_JSON
             resp.media = data
 
-    @inject
     async def on_get_top_queries(
         self,
         req: falcon.asgi.request.Request,  # pylint: disable=[unused-argument]
         resp: falcon.asgi.response.Response,
-        db_connection: DbConnection = Provide[Container.db_connection],
     ) -> None:
         """
         Method for fetching top most used queries in DB
         """
         try:
-            data = await db_connection.get_top_queries()
+            data = await self._core_api.get_top_queries()
         except NotFoundError as e:
             self._logger.error("%s", e)
             resp.status = falcon.HTTP_404
@@ -84,18 +83,16 @@ class DbReportResource:
             resp.content_type = falcon.MEDIA_JSON
             resp.media = data
 
-    @inject
     async def on_get_top_tables(
         self,
         req: falcon.asgi.request.Request,  # pylint: disable=[unused-argument]
         resp: falcon.asgi.response.Response,
-        db_connection: DbConnection = Provide[Container.db_connection],
     ) -> None:
         """
         Method for fetching top tables in size in DB
         """
         try:
-            data = await db_connection.get_top_table_sizes()
+            data = await self._core_api.get_top_table_sizes()
         except NotFoundError as e:
             self._logger.error("%s", e)
             resp.status = falcon.HTTP_404
@@ -106,18 +103,16 @@ class DbReportResource:
             resp.content_type = falcon.MEDIA_JSON
             resp.media = data
 
-    @inject
     async def on_get_dead_tuples(
         self,
         req: falcon.asgi.request.Request,  # pylint: disable=[unused-argument]
         resp: falcon.asgi.response.Response,
-        db_connection: DbConnection = Provide[Container.db_connection],
     ) -> None:
         """
         Method for fetching top tables in size in DB
         """
         try:
-            data = await db_connection.get_dead_tuples()
+            data = await self._core_api.get_dead_tuples()
         except NotFoundError as e:
             self._logger.error("%s", e)
             resp.status = falcon.HTTP_404

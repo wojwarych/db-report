@@ -1,4 +1,6 @@
-"""Module that implements repository functionalities to fetch stats about DB performance"""
+"""
+Module that implements repository functionalities to fetch stats about DB performance
+"""
 
 import functools
 import logging
@@ -43,7 +45,10 @@ def handle_db_exceptions(
 
 
 class DbConnection:
-    """Repository-like class that provides communication to statistic resources for Postgres DB"""
+    """
+    Repository-like class that provides communication to
+    statistic resources for Postgres DB
+    """
 
     def __init__(self, uow: IUnitOfWork):
         self.uow = uow
@@ -122,7 +127,8 @@ ORDER BY pg_total_relation_size (C.oid) DESC LIMIT 10;"""
                 text(
                     """SELECT
 relname AS tablename, n_dead_tup AS dead_tuples, n_live_tup AS alive_tuples
-FROM pg_stat_all_tables WHERE schemaname = 'public' ORDER BY dead_tuples DESC LIMIT 10;"""
+FROM pg_stat_all_tables WHERE schemaname = 'public'
+ORDER BY dead_tuples DESC LIMIT 10;"""
                 )
             )
             ret1 = dead_tuples.fetchall()

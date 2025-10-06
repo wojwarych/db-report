@@ -61,7 +61,9 @@ class SQLAlchemyUnitOfWork(IUnitOfWork):
         await self.session.close()
 
     async def commit(self) -> None:
-        """Runs commit method on the session object. Should be used inside ctx manager"""
+        """
+        Runs commit method on the session object. Should be used inside ctx manager
+        """
         await self.session.commit()
 
     async def rollback(self) -> None:
