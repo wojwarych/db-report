@@ -7,11 +7,13 @@ import typing as t
 from sqlalchemy import exc, text
 
 from db_report.core.mappers import (
+    DeadTuples,
+    DeadTuplesTables,
     QueryData,
+    Table,
     TablePagesStats,
     TopQueries,
     TopTables,
-    Table,
 )
 
 from .engine import IUnitOfWork
@@ -75,7 +77,9 @@ class DbConnection:
         async with self.uow:
             page_size = await self.uow.session.execute(  # type: ignore[attr-defined]
                 text(
-                    """SELECT query, calls, total_exec_time, rows, 100.0 * shared_blks_hit / nullif(shared_blks_hit + shared_blks_read, 0) AS hit_percent FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 10;"""  # pylint: disable=line-too-long
+                    """SELECT query, calls, total_exec_time, rows,
+100.0 * shared_blks_hit / nullif(shared_blks_hit + shared_blks_read, 0)
+AS hit_percent FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 10;"""
                 )
             )
             ret1 = page_size.fetchall()
@@ -96,9 +100,11 @@ class DbConnection:
             table_sizes = await self.uow.session.execute(  # type: ignore[attr-defined]
                 text(
                     """SELECT
-relname AS relation, pg_size_pretty(pg_total_relation_size(C.oid)) AS total_size, pg_size_pretty(pg_relation_size(C.oid)) AS table_size
+relname AS relation, pg_size_pretty(pg_total_relation_size(C.oid))
+AS total_size, pg_size_pretty(pg_relation_size(C.oid)) AS table_size
 FROM pg_class C LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace)
-WHERE nspname NOT IN ('pg_catalog', 'information_schema') AND C.relkind <> 'i' AND nspname !~ '^pg_toast'
+WHERE nspname NOT IN ('pg_catalog', 'information_schema')
+AND C.relkind <> 'i' AND nspname !~ '^pg_toast'
 ORDER BY pg_total_relation_size (C.oid) DESC LIMIT 10;"""
                 )
             )
@@ -106,4 +112,23 @@ ORDER BY pg_total_relation_size (C.oid) DESC LIMIT 10;"""
 
             return TopTables(
                 tables=[Table(q.relation, q.total_size, q.table_size) for q in ret1]
+            )
+
+    @handle_db_exceptions
+    async def get_dead_tuples(self) -> DeadTuplesTables:
+        """Returns statistics about biggest tables in size"""
+        async with self.uow:
+            dead_tuples = await self.uow.session.execute(  # type: ignore[attr-defined]
+                text(
+                    """SELECT
+relname AS tablename, n_dead_tup AS dead_tuples, n_live_tup AS alive_tuples
+FROM pg_stat_all_tables WHERE schemaname = 'public' ORDER BY dead_tuples DESC LIMIT 10;"""
+                )
+            )
+            ret1 = dead_tuples.fetchall()
+
+            return DeadTuplesTables(
+                tables=[
+                    DeadTuples(q.tablename, q.dead_tuples, q.alive_tuples) for q in ret1
+                ]
             )

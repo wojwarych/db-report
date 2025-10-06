@@ -24,6 +24,16 @@ prod = [
 [tool.uv]
 default-groups = ["prod"]
 
+[tool.ruff.lint]
+select = [
+  "E",
+  "F",
+  "UP",
+  "B",
+  "SIM",
+  "I",
+]
+
 [tool.pylint]
 disable = ["c-extension-no-member"]
 

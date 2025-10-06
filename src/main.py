@@ -106,6 +106,28 @@ class DbReportResource:
             resp.content_type = falcon.MEDIA_JSON
             resp.media = data
 
+    @inject
+    async def on_get_dead_tuples(
+        self,
+        req: falcon.asgi.request.Request,  # pylint: disable=[unused-argument]
+        resp: falcon.asgi.response.Response,
+        db_connection: DbConnection = Provide[Container.db_connection],
+    ) -> None:
+        """
+        Method for fetching top tables in size in DB
+        """
+        try:
+            data = await db_connection.get_dead_tuples()
+        except NotFoundError as e:
+            self._logger.error("%s", e)
+            resp.status = falcon.HTTP_404
+            resp.content_type = falcon.MEDIA_TEXT
+            resp.text = "Could not access data!"
+        else:
+            resp.status = falcon.HTTP_200
+            resp.content_type = falcon.MEDIA_JSON
+            resp.media = data
+
 
 container = Container()
 container.logging.init()
@@ -117,6 +139,7 @@ db_rep_res = DbReportResource()
 app.add_route("/page/{table_name}", db_rep_res, suffix="table_pages")
 app.add_route("/queries/top", db_rep_res, suffix="top_queries")
 app.add_route("/tables/top", db_rep_res, suffix="top_tables")
+app.add_route("/dead-tuples", db_rep_res, suffix="dead_tuples")
 
 
 if __name__ == "__main__":

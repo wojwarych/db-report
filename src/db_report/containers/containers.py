@@ -9,7 +9,7 @@ from db_report.storage.db import DbConnection
 from db_report.storage.engine import SQLAlchemyUnitOfWork, yield_engine
 
 
-class Container(containers.DeclarativeContainer):
+class Container(containers.DeclarativeContainer):  # pylint: disable=too-few-public-methods
     """Definition of Container for the API"""
 
     config = providers.Configuration(ini_files=["../config.ini"])
