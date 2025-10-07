@@ -27,7 +27,7 @@ RetType = t.TypeVar("RetType")
 class NotFoundError(Exception): ...  # pylint: disable=missing-class-docstring
 
 
-def handle_db_exceptions(
+def handle_db_exceptions[Param](
     f: t.Callable[Param, t.Awaitable[RetType]],
 ) -> t.Callable[Param, t.Awaitable[RetType]]:
     """Decorator that wraps DB exceptions and propagates them in more suitable manner"""
