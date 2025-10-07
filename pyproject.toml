@@ -11,6 +11,9 @@ dependencies = []
 dev = [
     "mypy>=1.16.1",
     "pylint>=3.3.7",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+    "pytest-cov>=7.0.0",
     "ruff>=0.12.1",
 ]
 prod = [
@@ -23,6 +26,24 @@ prod = [
 
 [tool.uv]
 default-groups = ["prod"]
+
+[tool.pytest.ini_options]
+testpaths = [ "tests/" ]
+addopts = [ "--cov", "--cov-report=term-missing" ]
+required_plugins = [ "pytest-cov" ]
+minversion = "8.4.2"
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+branch = true
+omit = [ "__init__" ]
+source = [ "src/" ]
+
+[tool.coverage.report]
+fail_under = 21.5
+omit = [ "__init__" ]
+show_missing = true
+skip_empty = true
 
 [tool.ruff.lint]
 select = [

@@ -11,9 +11,9 @@ import uvicorn
 from dependency_injector.wiring import Provide, inject
 from falcon import media
 
-from db_report.containers.containers import Container
-from db_report.core.core_api import DBStats
-from db_report.storage.db import NotFoundError
+from src.db_report.containers.containers import Container
+from src.db_report.core.core_api import DBStats
+from src.db_report.storage.db import NotFoundError
 
 
 class DataClassSerializer(json.JSONEncoder):

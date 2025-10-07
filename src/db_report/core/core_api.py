@@ -1,16 +1,16 @@
 """Core API for collecting specific statistics of database"""
 
-from db_report.core.mappers import (
+from src.db_report.core.mappers import (
     DeadTuplesTables,
     TablePagesStats,
     TopQueries,
     TopTables,
 )
-from db_report.storage.db import DbConnection
+from src.db_report.storage.storage_base import IConnection
 
 
 class DBStats:
-    def __init__(self, connection: DbConnection) -> None:
+    def __init__(self, connection: IConnection) -> None:
         self._connection = connection
 
     async def get_table_pages(self, table_name: str) -> TablePagesStats:

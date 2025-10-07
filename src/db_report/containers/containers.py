@@ -5,9 +5,9 @@ import logging.config
 from dependency_injector import containers, providers
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from db_report.core.core_api import DBStats
-from db_report.storage.db import DbConnection
-from db_report.storage.engine import SQLAlchemyUnitOfWork, yield_engine
+from src.db_report.core.core_api import DBStats
+from src.db_report.storage.db import DbConnection
+from src.db_report.storage.engine import SQLAlchemyUnitOfWork, yield_engine
 
 
 class Container(containers.DeclarativeContainer):  # pylint: disable=too-few-public-methods

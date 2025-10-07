@@ -55,3 +55,51 @@ jobs:
 
       - name: run ruff linter
         run: uv run ruff check ./src ./tests
+
+  typecheck:
+    name: Run MyPy
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ./.python-version
+
+      - name: install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.12"
+          enable-cache: true
+
+      - name: install the project
+        run: uv sync --locked --all-extras --dev
+
+      - name: run mypy typecheck
+        run: uv run mypy ./src ./tests
+
+  unit-tests:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ./.python-version
+
+      - name: install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.12"
+          enable-cache: true
+
+      - name: install the project
+        run: uv sync --locked --all-extras --dev
+
+      - name: run tests
+        run: uv run pytest
