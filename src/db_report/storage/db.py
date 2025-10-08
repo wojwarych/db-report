@@ -77,7 +77,6 @@ class DbConnection(IConnection):
                 ret1.free_percent,
             )
 
-    @handle_db_exceptions
     async def get_top_queries(self) -> TopQueries:
         """Returns statistics about most often called queries"""
         async with self.uow:
@@ -99,7 +98,6 @@ AS hit_percent FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 10;""
                 ]
             )
 
-    @handle_db_exceptions
     async def get_top_table_sizes(self) -> TopTables:
         """Returns statistics about biggest tables in size"""
         async with self.uow:
@@ -120,7 +118,6 @@ ORDER BY pg_total_relation_size (C.oid) DESC LIMIT 10;"""
                 tables=[Table(q.relation, q.total_size, q.table_size) for q in ret1]
             )
 
-    @handle_db_exceptions
     async def get_dead_tuples(self) -> DeadTuplesTables:
         """Returns statistics about biggest tables in size"""
         async with self.uow:
