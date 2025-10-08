@@ -7,13 +7,12 @@ from functools import partial
 
 import falcon
 import falcon.asgi
-import uvicorn
 from dependency_injector.wiring import Provide, inject
 from falcon import media
 
-from db_report.containers.containers import Container
-from db_report.core.core_api import DBStats
-from db_report.storage.db import NotFoundError
+from src.db_report.containers.containers import Container
+from src.db_report.core.core_api import DBStats
+from src.db_report.storage.db import NotFoundError
 
 
 class DataClassSerializer(json.JSONEncoder):
@@ -135,7 +134,3 @@ app.add_route("/page/{table_name}", db_rep_res, suffix="table_pages")
 app.add_route("/queries/top", db_rep_res, suffix="top_queries")
 app.add_route("/tables/top", db_rep_res, suffix="top_tables")
 app.add_route("/dead-tuples", db_rep_res, suffix="dead_tuples")
-
-
-if __name__ == "__main__":
-    uvicorn.run("main:app", port=8000, host="0.0.0.0", reload=True)

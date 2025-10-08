@@ -5,10 +5,11 @@ Module that implements repository functionalities to fetch stats about DB perfor
 import functools
 import logging
 import typing as t
+from collections.abc import Coroutine
 
 from sqlalchemy import exc, text
 
-from db_report.core.mappers import (
+from src.db_report.core.mappers import (
     DeadTuples,
     DeadTuplesTables,
     QueryData,
@@ -17,23 +18,23 @@ from db_report.core.mappers import (
     TopQueries,
     TopTables,
 )
+from src.db_report.storage.engine import IUnitOfWork
+from src.db_report.storage.storage_base import IConnection
 
-from .engine import IUnitOfWork
-
-Param = t.ParamSpec("Param")
-RetType = t.TypeVar("RetType")
+type Deco[**P] = t.Callable[P, t.Any]
+T = t.TypeVar("T")
 
 
 class NotFoundError(Exception): ...  # pylint: disable=missing-class-docstring
 
 
-def handle_db_exceptions[Param](
-    f: t.Callable[Param, t.Awaitable[RetType]],
-) -> t.Callable[Param, t.Awaitable[RetType]]:
+def handle_db_exceptions[T, **P](
+    f: t.Callable[P, Coroutine[t.Any, t.Any, T]],
+) -> t.Callable[P, Coroutine[t.Any, t.Any, T]]:
     """Decorator that wraps DB exceptions and propagates them in more suitable manner"""
 
     @functools.wraps(f)
-    async def wrapped(*args: Param.args, **kwargs: Param.kwargs) -> RetType:
+    async def wrapped(*args: P.args, **kwargs: P.kwargs) -> T:
         logger = logging.getLogger(f"{__name__}")
         try:
             return await f(*args, **kwargs)
@@ -44,7 +45,7 @@ def handle_db_exceptions[Param](
     return wrapped
 
 
-class DbConnection:
+class DbConnection(IConnection):
     """
     Repository-like class that provides communication to
     statistic resources for Postgres DB
@@ -76,7 +77,6 @@ class DbConnection:
                 ret1.free_percent,
             )
 
-    @handle_db_exceptions
     async def get_top_queries(self) -> TopQueries:
         """Returns statistics about most often called queries"""
         async with self.uow:
@@ -98,7 +98,6 @@ AS hit_percent FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 10;""
                 ]
             )
 
-    @handle_db_exceptions
     async def get_top_table_sizes(self) -> TopTables:
         """Returns statistics about biggest tables in size"""
         async with self.uow:
@@ -119,7 +118,6 @@ ORDER BY pg_total_relation_size (C.oid) DESC LIMIT 10;"""
                 tables=[Table(q.relation, q.total_size, q.table_size) for q in ret1]
             )
 
-    @handle_db_exceptions
     async def get_dead_tuples(self) -> DeadTuplesTables:
         """Returns statistics about biggest tables in size"""
         async with self.uow:

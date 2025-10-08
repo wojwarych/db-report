@@ -10,3 +10,23 @@ repos:
       - id: ruff-check
         args: [ --fix ]
       - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: typecheck
+        entry: bash -c 'uv run mypy src/ tests/'
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: true
+
+  - repo: local
+    hooks:
+      - id: pytest-run
+        name: pytest-unit
+        entry: bash -c 'uv run pytest -vvv'
+        types: [python]
+        language: system
+        pass_filenames: false
+        always_run: true

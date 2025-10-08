@@ -19,4 +19,4 @@ RUN uv sync --locked
 COPY ./src /app/src/
 WORKDIR /app/src
 EXPOSE 8000
-ENTRYPOINT ["uv", "run", "main.py"]
+ENTRYPOINT ["uv", "run", "uvicorn", "main:app", "--reload", "--port", "8000", "--host", "0.0.0.0", "--app-dir", "/app"]
